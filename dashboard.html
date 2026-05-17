@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Translation Engine</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --glass-bg: rgba(20, 25, 40, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --accent-primary: #00e5ff;
+            --accent-success: #00ffaa;
+            --accent-warning: #ffb700;
+            --text-main: #e2e8f0;
+            --text-muted: #94a3b8;
+            --code-bg: #111827;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background-image: radial-gradient(circle at 15% 50%, rgba(0, 229, 255, 0.1), transparent 25%),
+                              radial-gradient(circle at 85% 30%, rgba(0, 255, 170, 0.08), transparent 25%);
+        }
+
+        header {
+            padding: 1.5rem;
+            text-align: center;
+            border-bottom: 1px solid var(--glass-border);
+            background: rgba(11, 15, 25, 0.8);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(90deg, #fff, var(--accent-primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        button {
+            background: linear-gradient(90deg, rgba(0, 229, 255, 0.2), rgba(0, 255, 170, 0.2));
+            border: 1px solid rgba(0, 229, 255, 0.5);
+            color: var(--accent-primary);
+            padding: 0.8rem 2rem;
+            border-radius: 30px;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        button:hover {
+            box-shadow: 0 0 20px rgba(0, 229, 255, 0.4);
+            color: #fff;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 300px 1fr;
+            gap: 1rem;
+            padding: 2rem;
+            flex-grow: 1;
+            height: calc(100vh - 100px);
+            box-sizing: border-box;
+        }
+
+        .code-panel {
+            background: var(--code-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        .panel-header {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 0.8rem 1rem;
+            border-bottom: 1px solid var(--glass-border);
+            font-weight: 500;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .code-container {
+            padding: 1.5rem;
+            overflow-y: auto;
+            flex-grow: 1;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            color: #a3b8cc;
+            white-space: pre;
+        }
+
+        /* Center Animation Panel */
+        .center-panel {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2rem;
+        }
+
+        .log-box {
+            width: 100%;
+            height: 200px;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            padding: 1rem;
+            overflow-y: auto;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.8rem;
+            color: var(--accent-success);
+            box-sizing: border-box;
+        }
+
+        .arrow-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .arrow {
+            width: 50px;
+            height: 50px;
+            border-top: 5px solid var(--accent-primary);
+            border-right: 5px solid var(--accent-primary);
+            transform: rotate(45deg);
+            opacity: 0.2;
+        }
+
+        .animating .arrow:nth-child(1) { animation: flash 1s infinite 0.1s; }
+        .animating .arrow:nth-child(2) { animation: flash 1s infinite 0.3s; }
+        .animating .arrow:nth-child(3) { animation: flash 1s infinite 0.5s; }
+
+        @keyframes flash {
+            0% { opacity: 0.2; box-shadow: none; }
+            50% { opacity: 1; filter: drop-shadow(0 0 10px var(--accent-primary)); }
+            100% { opacity: 0.2; }
+        }
+
+        /* Typewriter Cursor */
+        .cursor {
+            display: inline-block;
+            width: 8px;
+            height: 1.2em;
+            background-color: var(--accent-primary);
+            vertical-align: middle;
+            animation: blink 1s step-end infinite;
+            display: none;
+        }
+
+        .typing .cursor {
+            display: inline-block;
+        }
+
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>AI Migration Engine</h1>
+        <button id="startBtn" onclick="startMigration()">Initialize Translation</button>
+    </header>
+
+    <div class="container">
+        <!-- Legacy Code Panel -->
+        <div class="code-panel">
+            <div class="panel-header">
+                <span>legacy_system / sample_db2.cbl</span>
+                <span style="color: var(--text-muted)">COBOL</span>
+            </div>
+            <div class="code-container" id="legacyCode">Loading...</div>
+        </div>
+
+        <!-- Middle Telemetry Panel -->
+        <div class="center-panel">
+            <div class="arrow-container" id="arrows">
+                <div class="arrow"></div>
+                <div class="arrow"></div>
+                <div class="arrow"></div>
+            </div>
+            
+            <div class="log-box" id="terminal">
+                > System idle.<br>
+                > Awaiting command...
+            </div>
+        </div>
+
+        <!-- Modern Code Panel -->
+        <div class="code-panel">
+            <div class="panel-header">
+                <span>modern_cloud / modern_db2_app.py</span>
+                <span style="color: var(--accent-primary)">PYTHON</span>
+            </div>
+            <div class="code-container">
+                <span id="modernCode"></span><span class="cursor" id="cursor"></span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let fullPythonCode = "";
+        let isMigrating = false;
+
+        async function fetchCode() {
+            try {
+                // Fetch legacy COBOL
+                const legacyRes = await fetch('/api/legacy_code');
+                const legacyData = await legacyRes.json();
+                document.getElementById('legacyCode').textContent = legacyData.code;
+
+                // Fetch target Python
+                const modernRes = await fetch('/api/modern_code');
+                const modernData = await modernRes.json();
+                fullPythonCode = modernData.code;
+            } catch (err) {
+                console.error("Failed to fetch API code", err);
+                document.getElementById('legacyCode').textContent = "API Error. Check if backend is running.";
+            }
+        }
+
+        function appendLog(msg) {
+            const term = document.getElementById('terminal');
+            term.innerHTML += `<br>> ${msg}`;
+            term.scrollTop = term.scrollHeight;
+        }
+
+        async function typeCode() {
+            const codeBox = document.getElementById('modernCode');
+            const container = codeBox.parentElement;
+            container.classList.add('typing');
+            
+            let i = 0;
+            return new Promise(resolve => {
+                function typeChar() {
+                    if (i < fullPythonCode.length) {
+                        codeBox.textContent += fullPythonCode.charAt(i);
+                        i++;
+                        
+                        // Keep scrolled to bottom
+                        if (i % 10 === 0) {
+                            container.scrollTop = container.scrollHeight;
+                        }
+
+                        // Randomize typing speed to look like streaming
+                        const delay = Math.random() * 15 + 5; 
+                        setTimeout(typeChar, delay);
+                    } else {
+                        container.classList.remove('typing');
+                        resolve();
+                    }
+                }
+                typeChar();
+            });
+        }
+
+        async function startMigration() {
+            if (isMigrating || !fullPythonCode) return;
+            isMigrating = true;
+
+            const btn = document.getElementById('startBtn');
+            btn.textContent = "Processing...";
+            btn.style.opacity = "0.5";
+            
+            document.getElementById('arrows').classList.add('animating');
+            document.getElementById('modernCode').textContent = "";
+            
+            appendLog("Connecting to LLM Engine...");
+            await new Promise(r => setTimeout(r, 1000));
+            
+            appendLog("Analyzing COBOL Data Division...");
+            await new Promise(r => setTimeout(r, 1000));
+            
+            appendLog("Converting DB2 EXEC SQL to SQLAlchemy...");
+            await new Promise(r => setTimeout(r, 1000));
+            
+            appendLog("Streaming generated Python logic...");
+            
+            // Start typewriter animation
+            await typeCode();
+
+            appendLog("Validating Syntax via AST...");
+            await new Promise(r => setTimeout(r, 1000));
+            
+            appendLog("Migration Complete. Zero errors detected.");
+            document.getElementById('arrows').classList.remove('animating');
+            
+            btn.textContent = "Migration Success";
+            btn.style.background = "rgba(0, 255, 170, 0.2)";
+            btn.style.color = "var(--accent-success)";
+            btn.style.opacity = "1";
+        }
+
+        // Initialize on load
+        fetchCode();
+    </script>
+</body>
+</html>

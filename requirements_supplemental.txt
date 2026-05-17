@@ -1,0 +1,4 @@
+ibm_db
+ibm_db_sa
+SQLAlchemy
+requests

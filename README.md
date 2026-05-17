@@ -31,6 +31,8 @@ Legacy mainframes rely on flat VSAM files or ancient DB2 SQL. The engine seamles
 ### 4. Regulatory & Security Compliance
 Strict financial regulations require traceability. The pipeline generates a Line-by-Line Audit Traceability Matrix mapping exact COBOL procedures to Python methods. During translation, it actively scans for legacy anti-patterns (like hardcoded passwords) and patches them to modern security standards.
 
+
+
 ---
 
 ## 🚀 Getting Started
